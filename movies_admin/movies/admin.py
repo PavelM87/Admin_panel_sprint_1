@@ -15,14 +15,14 @@ class GenreInline(admin.TabularInline):
 
 @admin.register(Filmwork)
 class FilmworkAdmin(admin.ModelAdmin):
-    list_display = ('title', 'type', 'creation_date', 'rating')
+    list_display = ('title', 'type', 'creation_date', 'rating',)
     fields = (
         'title', 'type', 'description', 'creation_date', 'certificate',
-        'file_path', 'rating'
+        'file_path', 'rating',
     ) 
-    list_filter = ('type', 'creation_date', 'genres')
+    list_filter = ('type', 'creation_date', 'genres', 'rating',)
 
-    search_fields = ('title', 'description', 'id')
+    search_fields = ('title', 'description', 'id',)
     
     inlines = [
         PersonInline,
@@ -32,7 +32,8 @@ class FilmworkAdmin(admin.ModelAdmin):
 
 @admin.register(Person)
 class PersonAdmin(admin.ModelAdmin):
-    search_fields = ('full_name',)
+    list_display = ('full_name', 'birth_date',)
+    search_fields = ('full_name', 'birth_date',)
     inlines = [
         PersonInline
     ] 
@@ -40,4 +41,4 @@ class PersonAdmin(admin.ModelAdmin):
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'description',)
