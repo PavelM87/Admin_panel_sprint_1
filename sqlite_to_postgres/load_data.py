@@ -3,6 +3,8 @@ import io
 import csv
 import sqlite3
 import psycopg2
+import logging
+
 
 
 def get_headers(cur: sqlite3.Cursor) -> dict:
@@ -31,30 +33,33 @@ def get_data_from_sqlite(cur: sqlite3.Cursor, table: str, size: int) -> list:
 
 def put_data_to_postgres(dsn: dict, data: list, columns: str, table: str) -> None:
     """Вставит в таблицу table данные методом множественной вставки."""
-    with psycopg2.connect(**dsn) as conn, conn.cursor() as cursor:
-        fake_csv = io.StringIO()
-        fake_writer = csv.writer(fake_csv, delimiter='|')
-        fake_writer.writerows(data)
-        fake_csv.seek(0)
-        try:
+    try:
+        with psycopg2.connect(**dsn) as conn, conn.cursor() as cursor:
+            fake_csv = io.StringIO()
+            fake_writer = csv.writer(fake_csv, delimiter='|')
+            fake_writer.writerows(data)
+            fake_csv.seek(0)
+
+            logging.info("Try copy data to table: '%s'", table)
             cursor.execute(f'TRUNCATE {table} CASCADE;')
             cursor.copy_from(fake_csv, table, sep='|', null='', columns=columns)
             conn.commit()
-            print(f"Success copy data to table: '{table}'")
-        except Exception as e:
-            print(f"Something went wrong: {e}")
-    conn.close()
+
+            logging.info("Success copy data to table: '%s'", table)
+    finally:
+        conn.close()
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     con = sqlite3.connect('db.sqlite')
     cur = con.cursor()
     dsn = {
-        'dbname': 'movies',
-        'user': 'postgres',
+        'dbname': os.environ.get('POSTGRES_DBNAME'),
+        'user': os.environ.get('POSTGRES_USER'),
         'password': os.environ.get('POSTGRES_PASSWORD'),
-        'host': '127.0.0.1',
-        'port': 5432,
+        'host': os.environ.get('POSTGRES_HOST'),
+        'port': os.environ.get('POSTGRES_PORT'),
         'options': os.environ.get('POSTGRES_OPTIONS')
     }
     headers = get_headers(cur)
